@@ -1,5 +1,5 @@
 # SOP Compliance Tracker
-#### Video Demo: <https://youtu.be/hW9mcUQGxoM>
+
 
 ## Overview
 The SOP Compliance Tracker is a full-stack web application for out-of-hospital/ emergency medicine research. It is designed for emergency medical services (EMS) personnel and administrators to log, monitor, and evaluate time-critical rescue missions. In pre-hospital emergency care—specifically for **STEMI** (heart attack), **Stroke**, and **Trauma** protocols—strict adherence to Standard Operating Procedure (SOP) timeframes is critical for patient outcomes. This application enables responders to record key mission timestamps and automatically evaluates whether target intervention times were met, visualizing performance metrics through interactive dashboards.
