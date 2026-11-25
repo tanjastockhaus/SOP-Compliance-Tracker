@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    STROKE Dashboard
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid py-4 text-start">
+        <h1 class="h2 fw-bold text-dark mb-1">STROKE SOP-Compliance</h1>
+        <p class="text-muted mb-4">Genuine evaluation of compliance with treatment guidelines from the database.</p>
+
+        {% if is_admin %}
+            <div class="card bg-light border mb-4">
+                <div class="card-body">
+                    <div class="row align-items-end">
+                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                            <label for="filter-user" class="form-label small text-muted text-uppercase fw-bold">Filter by User</label>
+                            <select id="filter-user" class="form-select">
+                                <option value="all">All Users</option>
+                                {% for u in users %}
+                                    <option value="{{ u.id }}">{{ u.username }} ({{ u.work }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                            <label for="filter-workplace" class="form-label small text-muted text-uppercase fw-bold">Filter by Workplace</label>
+                            <select id="filter-workplace" class="form-select">
+                                <option value="all">All Workplaces</option>
+                                {% for w in workplaces %}
+                                    <option value="{{ w.work }}">{{ w.work }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4 mt-2 mt-md-0">
+                            <button id="export-csv-btn" type="button" class="btn btn-outline-success w-100">
+                                Download CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    <!-- KPI Cards Grid (Bootstrap Grid System) -->
+        <div class="row g-4 mb-4">
+        <!-- Card 1: Total Rescue operations -->
+            <div class="col-12 col-md-4">
+                <div class="card h-100 shadow-sm border-light">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted text-uppercase small font-weight-bold">Total Rescue operations</h6>
+                        <p id="kpi-total" class="card-text h2 fw-bold text-dark mt-2">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        <!-- Card 2: SOP Conformity -->
+            <div class="col-12 col-md-4">
+                <div class="card h-100 shadow-sm border-light">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted text-uppercase small font-weight-bold">Compliant</h6>
+                        <p id="kpi-compliant" class="card-text h2 fw-bold text-dark mt-2">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        <!-- Card 3: Compliance-Rate (changing colours) -->
+            <div class="col-12 col-md-4">
+                <div class="card h-100 shadow-sm border-light">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted text-uppercase small font-weight-bold">Compliance-Rate</h6>
+                        <p id="kpi-rate" class="card-text h2 fw-bold text-secondary mt-2">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Diagram -->
+        <div class="row">
+            <div class="col-12 col-xl-9">
+                <div class="card shadow-sm border-light">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark mb-4">STROKE Rescue Missions per day</h5>
+                        <div style="position: relative; height: 320px;">
+                            <canvas id="complianceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<!-- Chart.js bib -->
+    <script src="{{ url_for('static', filename='chart.js') }}"></script>
+<!--<script src="https://cloudflare.com"></script>-->
+
+    <script>
+        console.log("Dashboard-script was loaded!");
+
+        let complianceChart = null; // saves Chart-Instance for clean updates
+
+        function loadDashboardData() {
+            const userSelect = document.getElementById('filter-user');
+            const workplaceSelect = document.getElementById('filter-workplace');
+
+        // If admin dropdown exists, read values, else "all"
+            const userId = userSelect ? userSelect.value : 'all';
+            const workplace = workplaceSelect ? workplaceSelect.value : 'all';
+
+            const url = `/api/strokedashboard-data?user_id=${encodeURIComponent(userId)}&workplace=${encodeURIComponent(workplace)}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("Status " + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                // fill KPIs
+                    document.getElementById('kpi-total').innerText = data.kpi.total_missions;
+                    document.getElementById('kpi-compliant').innerText = data.kpi.compliant_missions;
+
+                // dynamic color
+                    const rateElement = document.getElementById('kpi-rate');
+                    rateElement.innerText = data.kpi.compliance_rate;
+
+                    const numericalRate = parseFloat(data.kpi.compliance_rate);
+                    rateElement.classList.remove('text-secondary', 'text-success', 'text-danger');
+
+                    if (numericalRate >= 80.0) {
+                        rateElement.classList.add('text-success');
+                    } else {
+                        rateElement.classList.add('text-danger');
+                    }
+
+                // destroy old charts before generating new ones
+                    if (complianceChart) {
+                        complianceChart.destroy();
+                    }
+
+                    const ctx = document.getElementById('complianceChart').getContext('2d');
+                    complianceChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.charts.labels,
+                            datasets: [{
+                                label: 'number of stroke missions',
+                                data: data.charts.values,
+                                backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                                borderColor: 'rgb(13, 110, 253)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1 }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading dashboard:', error);
+                    document.getElementById('kpi-total').innerText = "Error";
+                    document.getElementById('kpi-compliant').innerText = "Error";
+                    document.getElementById('kpi-rate').innerText = "Error";
+                });
+        }
+
+    // Event-Listener for Filter-Dropdowns
+        document.addEventListener('DOMContentLoaded', () => {
+            const userSelect = document.getElementById('filter-user');
+            const workplaceSelect = document.getElementById('filter-workplace');
+
+            if (userSelect) userSelect.addEventListener('change', loadDashboardData);
+            if (workplaceSelect) workplaceSelect.addEventListener('change', loadDashboardData);
+
+            const exportBtn = document.getElementById('export-csv-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    const userId = document.getElementById('filter-user').value;
+                    const workplace = document.getElementById('filter-workplace').value;
+                    window.location.href = `/export/stroke?user_id=${encodeURIComponent(userId)}&workplace=${encodeURIComponent(workplace)}`;
+                });
+            }
+
+        // initial loading
+            loadDashboardData();
+        });
+    </script>
+{% endblock %}

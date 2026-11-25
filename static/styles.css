@@ -1,0 +1,51 @@
+header {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    padding: 15px 5%;
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    /* sticks while scrolling  */
+    top: 0;
+    z-index: 1000;
+}
+
+p {
+    font-family: system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #222222;
+    margin-bottom: 1rem;
+    margin-inline: auto;
+    max-width: 85ch;
+    text-align: justify;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    /* Space between links */
+    margin: 0;
+    padding: 0;
+}
+
+/* Hover-effect for links */
+.nav-links a:hover {
+    color: #007bff;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: #1d4ed8;
+}

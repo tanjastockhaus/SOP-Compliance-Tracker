@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Stemi-Input
+{% endblock %}
+
+{% block main %}
+
+    <form id = "myForm" action="/stemi_input" method="post">
+        <div class="mb-3">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id = "date" name="date" aria-describedby="date-help" placeholder="Date of Mission" type="date">
+            <small id="date-help"> Date of the mission.</small>
+        </div>
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" id="timestamp1" name="on_scene" aria-describedby="onscene-help" placeholder="On Scene" type="time">
+            <small id="onscene-help"> Timestamp on Scene. </small>
+        </div>
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" id="timestamp2" name="ecg" aria-describedby="ecg-help" placeholder="Time of ECG" type="time">
+            <small id="ecg-help"> Timestamp ECG. </small>
+        </div>
+        <button class="btn btn-primary" type="submit">Send</button>
+    </form>
+
+    <dialog id="confirmPopup">
+        <h2>Check Input</h2>
+        <p id="popupMessage">Attention: The second time is smaller than the first time! If it's a mistake please cancel, if it's intentional (the mission was around midnight) please continue!</p>
+
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+    <!-- Cancel-Button -->
+            <button id="cancelBtn" type="button">Cancel</button>
+    <!-- Continue-Button ( INSERT ) -->
+            <button id="confirmBtn" type="button" style="background: green; color: white;">Continue</button>
+        </div>
+    </dialog>
+{% endblock %}
+{% block script %}
+    <script>
+        const form = document.getElementById('myForm');
+        const date = document.getElementById('date');
+        const ts1Input = document.getElementById('timestamp1');
+        const ts2Input = document.getElementById('timestamp2');
+        const popup = document.getElementById('confirmPopup');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+
+    // main-event at sending the form
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await sendDataToServer(false); // First try: "force_insert" is false
+        });
+
+    // function to send to the server
+        async function sendDataToServer(forceInsert) {
+            const data = {
+                time1: ts1Input.value,
+                time2: ts2Input.value,
+                date: date.value,
+                force_insert: forceInsert // tells python, if warning should be ignored
+            };
+
+            try {
+                const response = await fetch('/stemi_input', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log(result);
+
+                if (result.status === 'show_warning') {
+        // warning -> Pop-up
+                    popup.showModal();
+                } else if (result.status === 'success') {
+        // data saved
+                    alert("Data successfully saved!");
+                    popup.close();
+                    form.reset();
+                    window.location.replace("/");
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (error) {
+                console.error("Error with the request:", error);
+            }
+        }
+
+    // action for "cancel"
+        cancelBtn.addEventListener('click', () => {
+            popup.close();
+            form.reset(); // empty
+        });
+
+    // action for "continue"
+        confirmBtn.addEventListener('click', async () => {
+            await sendDataToServer(true);
+        });
+    </script>
+{% endblock %}

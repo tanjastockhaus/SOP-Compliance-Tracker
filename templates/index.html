@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+    <h2> SOP Compliance</h2>
+    <p>Welcome to the Wep-Application SOP Compliance.
+        This tool is designed to improve data acquiring in an out of hospital setting.
+        Paramedics or EMTs don't have much time between missions to fill out complicated forms.
+        So this tool was developed to allow a fast and simple data acquisition.
+        The data used are time-stamps medical personal can look up in their documentation.
+        Various standards or spezific parts of guidelines are examined for compliance.</p>
+
+    <h4>STEMI</h4>
+    <p> For example, the study investigates the time interval between initial patient contact and a 12-lead ECG in patients with chest pain.
+        The ACS guideline specifies a maximum of 10 minutes. </p>
+    <h4>STROKE</h4>
+    <p> Also under investigation is the time interval between initial patient contact and a CT in patients with suspected stroke.
+        The Stroke guideline specifies a maximum of 25 minutes between Door(Hospital)-to-CT.
+        The recommendations for on scene time are about 15 minutes as well as a transport duration up to 30 min.
+        A mission is flagged as compliant if the duration between the on_scene time and the ct are less than or equal to 70 minutes. </p>
+    <h4>TRAUMA</h4>
+    <p> The third research objective is the care of trauma patients. The study investigates the time interval between initial patient contact and the arrival in a trauma bay.
+        The Trauma guideline specifies a maximum of 60 minutes. </p>
+{% endblock %}
